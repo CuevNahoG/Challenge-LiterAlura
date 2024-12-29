@@ -11,6 +11,7 @@ public class Libros {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+
     private String titulo;
 
     private String idioma;
@@ -26,7 +27,6 @@ public class Libros {
 
     private List<Autores> autores;
 
-    // Constructor vacío requerido por JPA
     public Libros() {
     }
 
@@ -44,13 +44,11 @@ public class Libros {
                 "id=" + id +
                 ", titulo='" + titulo + '\'' +
                 ", idioma='" + idioma + '\'' +
-                ", descargas=" + descargas +
                 ", numeroDescargas=" + numeroDescargas +
                 ", autores=" + autores +
                 '}';
     }
 
-    // Getters y setters
     public Long getId() {
         return id;
     }

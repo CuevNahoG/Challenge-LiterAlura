@@ -7,12 +7,12 @@ import com.aluracursos.Challenge.LiterAlura.Repository.AutoresRepository;
 import com.aluracursos.Challenge.LiterAlura.Repository.LibrosRepository;
 import com.aluracursos.Challenge.LiterAlura.Service.ConsumoApi;
 import com.aluracursos.Challenge.LiterAlura.Service.ConvierteDatos;
-import com.fasterxml.jackson.core.JsonParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class Principal {
@@ -32,7 +32,7 @@ public class Principal {
         this.autoresRepository = autoresRepository;
     }
 
-    public void muestraElMenu() throws BuscarLibroException, IOException {
+    public void muestraElMenu(){
         var opcion = -1;
         System.out.println("Bienvenido al buscador de libros LiterAlura! \n" +
                 "Por favor selecciona una opción: ");
@@ -76,62 +76,125 @@ public class Principal {
         }
     }
 
-    private DatosLibros BuscarLibrosPorTitulo() throws BuscarLibroException {
+    private void BuscarLibrosPorTitulo() {
         try {
-            System.out.print("Introduce el título del libro que deseas buscar: ");
-            var nombreLibros = teclado.nextLine();
-            var url = URL_BASE + "?search=" + nombreLibros.replace(" ", "%20");
+            System.out.print("Introduce el nombre del libro que deseas buscar: ");
+            String nombreLibros = teclado.nextLine().toLowerCase();
+
+            String url = URL_BASE + "?search=" + nombreLibros.replace(" ", "%20");
             String json = consumoApi.obtenerDatos(url);
             DatosLibros datos = conversor.obtenerDatos(json, DatosLibros.class);
-            return datos;
-        } catch (Exception e) {
-            String mensajeError;
-            if (e instanceof IOException) {
-                mensajeError = "Error de conexión o de entrada/salida: " + e.getMessage();
-            } else if (e instanceof JsonParseException) {
-                mensajeError = "Error al procesar la respuesta JSON: " + e.getMessage();
-            } else {
-                mensajeError = "Error inesperado al buscar el libro: " + e.getMessage();
+
+            if (datos.getBooks().isEmpty()) {
+                System.out.println("No se encontraron libros que coincidan con el título ingresado.");
+                return;
             }
-            System.err.println(mensajeError);
-            throw new BuscarLibroException("Error al buscar el libro: " + mensajeError, (RuntimeException) e);
+
+            System.out.println("\n----- Resultados de la búsqueda -----");
+            for (Libros libroApi : datos.getBooks()) {
+                Libros libroBd = librosRepository.findByTitulo(libroApi.getTitulo());
+
+                if (libroBd == null) {
+                    Libros nuevoLibro = new Libros();
+                    nuevoLibro.setTitulo(libroApi.getTitulo());
+                    nuevoLibro.setIdioma(libroApi.getIdioma());
+                    nuevoLibro.setAutores(mapearAutores(libroApi.getAutores()));
+
+                    librosRepository.save(nuevoLibro);
+                    System.out.println("Libro '" + nuevoLibro.getTitulo() + "' añadido a la base de datos.");
+                } else {
+                    System.out.println("Libro '" + libroBd.getTitulo() + "' ya existe en la base de datos.");
+                }
+
+                System.out.println("Título: " + libroApi.getTitulo());
+                System.out.println("Autores: " + libroApi.getAutores().stream().map(Autores::getNombre).collect(Collectors.joining(", ")));
+                System.out.println("Idioma: " + libroApi.getIdioma());
+                System.out.println("-------------------------------------");
+            }
+        } catch (IOException e) {
+            System.out.println("Error de conexión: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("Ocurrió un error al realizar la búsqueda: " + e.getMessage());
         }
     }
+
+    private List<Autores> mapearAutores(List<Autores> autoresApi) {
+        return autoresApi.stream()
+                .map(autorApi -> {
+                    Autores autorBd = autoresRepository.findByNombreIgnoreCase(autorApi.getNombre());
+                    if (autorBd == null) {
+                        autorBd = new Autores(autorApi.getNombre());
+                        autoresRepository.save(autorBd);
+                    }
+                    return autorBd;
+                })
+                .collect(Collectors.toList());
+    }
+
     private void MostrarLibrosRegistrados(){
-        List<Libros> libros = librosRepository.findAll();
-        System.out.println("Estos son los libros registrados en la base de datos hasta ahora : " + libros);
+        List<Libros> librosRegistrados = librosRepository.findAll();
+
+        if (librosRegistrados.isEmpty()) {
+            System.out.println("No hay libros registrados en la base de datos.");
+            return;
+        }
+        System.out.println("\n----- Libros registrados en la base de datos -----\n");
+
+        for (Libros libro : librosRegistrados) {
+            System.out.println("Título: " + libro.getTitulo());
+            System.out.println("Autor: " + libro.getAutores());
+            System.out.println("Idioma: " + libro.getIdioma());
+            System.out.println("---------------------------------------------------");
+        }
     }
 
     private void MostrarAutoresRegistrados() {
-        List<Autores> autores = autoresRepository.findAll();
-        System.out.println("Estos son loa autores registrados en la base de datos hasta el momento: " + autores);
+        List<Autores> autoresRegistrados = autoresRepository.findAll();
+
+        if (autoresRegistrados.isEmpty()) {
+            System.out.println("No hay autores registrados en la base de datos.");
+            return;
+        }
+
+        System.out.println("\n----- AUTORES REGISTRADOS EN LA BASE DE DATOS -----\n");
+
+        for (Autores autor : autoresRegistrados) {
+            System.out.println("Nombre: " + autor.getNombre());
+            System.out.println("Fecha de Nacimiento: " + autor.getFechaNacimiento());
+            if (autor.getFechaDeceso() == 0) {
+                System.out.println("Estado: Aún vive");
+            } else {
+                System.out.println("Fecha de Deceso: " + autor.getFechaDeceso());
+            }
+            System.out.println("---------------------------------------------------");
+        }
     }
 
     private void BuscarAutoresPorFecha() {
-        System.out.println("Escribe la fecha que deseas buscar  (por ejemplo, 1800): ");
-        String inputFecha = teclado.nextLine();
-        int fecha;
+        System.out.println("Escribe el año que deseas buscar (por ejemplo, 1800): ");
+        String inputAnio = teclado.nextLine();
+
         try {
-            fecha = Integer.parseInt(inputFecha);
+            int anio = Integer.parseInt(inputAnio);
+            List<Autores> autoresEncontrados = autoresRepository.findAutoresByFechaViva(anio);
+
+            if (autoresEncontrados.isEmpty()) {
+                System.out.println("No se encontraron autores para el año " + anio + ".");
+            } else {
+                System.out.println("\n----- Autores vivos o que vivieron en " + anio + " -----");
+                for (Autores autor : autoresEncontrados) {
+                    System.out.println("Nombre: " + autor.getNombre());
+                    System.out.println("Fecha de Nacimiento: " + autor.getFechaNacimiento());
+                    if (autor.getFechaDeceso() == 0) {
+                        System.out.println("Estado: Aún vive");
+                    } else {
+                        System.out.println("Fecha de Deceso: " + autor.getFechaDeceso());
+                    }
+                    System.out.println("---------------------------------------------------");
+                }
+            }
         } catch (NumberFormatException e) {
             System.out.println("Formato inválido. Por favor ingresa un año válido.");
-            return;
-        }
-        List<Autores> autores = autoresRepository.findAutoresByFechaViva(fecha);
-        if (autores.isEmpty()) {
-            System.out.println("No se encontraron autores que vivieron en ese año");
-        }else {
-            System.out.println("Estos son los autores que vivieron en" + fecha + ": ");
-            for (Autores autor: autores){
-                System.out.println("Nombre: " + autor.getNombre());
-                System.out.println("Fecha de nacimiento: " + autor.getFechaNacimiento());
-                if (autor.getFechaDeceso() == 0) {
-                    System.out.println("Fecha de deceso: Aún vive.");
-                } else {
-                    System.out.println("Fecha de deceso: " + autor.getFechaDeceso());
-                }
-                System.out.println("-------------------------------");
-            }
         }
     }
 
