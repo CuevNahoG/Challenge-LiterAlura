@@ -1,4 +1,4 @@
-package com.aluracursos.Challenge.LiterAlura.Service;
+package com.alura.literalura.service;
 
 import java.io.IOException;
 import java.net.URI;
@@ -7,17 +7,17 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 public class ConsumoApi {
-
-    public String obtenerDatos(String url) throws IOException{
+    public String obtenerDatosApi (String url) {
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .build();
         HttpResponse<String> response = null;
         try {
-            response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            response = client
+                    .send(request, HttpResponse.BodyHandlers.ofString());
         } catch (IOException | InterruptedException e) {
-            throw new RuntimeException("Ups.. no puedo encontrar la informacion solicitada." + e.getMessage(), e);
+            throw new RuntimeException(e);
         }
         return response.body();
     }

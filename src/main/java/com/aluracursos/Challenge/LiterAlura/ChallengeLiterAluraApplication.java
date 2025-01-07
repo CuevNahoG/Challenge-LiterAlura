@@ -1,30 +1,29 @@
 package com.aluracursos.Challenge.LiterAlura;
 
 import com.aluracursos.Challenge.LiterAlura.Principal.Principal;
+import com.aluracursos.Challenge.LiterAlura.Repository.AutoresRepository;
+import com.aluracursos.Challenge.LiterAlura.Repository.LibrosRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-
-import java.io.IOException;
 
 @SpringBootApplication
 public class ChallengeLiterAluraApplication implements CommandLineRunner {
 
-	private final Principal principal;
+	@Autowired
+	private AutoresRepository autoresRepository;
 
-	public ChallengeLiterAluraApplication(Principal principal) {
-		this.principal = principal;
-	}
+	@Autowired
+	private LibrosRepository librosRepository;
 
 	public static void main(String[] args) {
-		org.springframework.boot.SpringApplication.run(ChallengeLiterAluraApplication.class, args);
+		SpringApplication.run(ChallengeLiterAluraApplication.class, args);
 	}
 
 	@Override
-	public void run(String... args) throws IOException {
-        try {
-            principal.muestraElMenu();
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e);
-        }
-    }
+	public void run(String... args) throws Exception {
+		Principal principal = new Principal(autoresRepository, librosRepository);
+		principal.muestramenu();
+	}
 }

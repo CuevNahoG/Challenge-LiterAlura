@@ -1,78 +1,54 @@
 package com.aluracursos.Challenge.LiterAlura.Model;
 
 import jakarta.persistence.*;
-import java.util.List;
+
+
 
 @Entity
-@Table(name = "Libros")
+@Table(name ="libros")
 public class Libros {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-
+    private Long Id;
+    @Column(unique = true)
     private String titulo;
-
-    private String idioma;
-
+    @ManyToOne
+    private Autores autores;
+    @Enumerated(EnumType.STRING)
+    private CategoriaIdioma idioma;
     private Integer descargas;
 
-    @ManyToMany
-    @JoinTable(
-            name = "libro_autores",
-            joinColumns = @JoinColumn(name = "libro_id"),
-            inverseJoinColumns = @JoinColumn(name = "autor_id")
-    )
+    public Libros(){}
 
-    private List<Autores> autores;
+    public Libros(DatosLibros datosLibro){
+        this.titulo = datosLibro.titulo();
+        this.autores = new Autores(datosLibro.autores().get(0));
+        this.descargas = datosLibro.descargas();
+        this.idioma = CategoriaIdioma.fromString(datosLibro.idiomas().toString().split(",")[0].trim());
 
-    public Libros() {
     }
-
-    public Libros(String titulo, String idioma, String nombreAutor) {
-        this.titulo = titulo;
-        this.idioma = idioma;
-        this.autores = List.of(new Autores(nombreAutor));
-    }
-
 
     @Override
     public String toString() {
-        String numeroDescargas = "0";
-        return "Libros{" +
-                "id=" + id +
-                ", titulo='" + titulo + '\'' +
-                ", idioma='" + idioma + '\'' +
-                ", numeroDescargas=" + numeroDescargas +
-                ", autores=" + autores +
-                '}';
+        return "-----LIBRO-----\n"+
+                "Título: " + titulo + "\n" +
+                "Autor: " + autores.getNombre()+ "\n" +
+                "Idioma: " + idioma + "\n" +
+                "Número de descargas: " + descargas + "\n" +
+                "---------------";
     }
-
     public Long getId() {
-        return id;
+        return Id;
     }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public String getTitulo() {
         return titulo;
     }
-
-    public void setTitulo(String titulo) {
-        this.titulo = titulo;
+    public Autores getAutores() {
+        return autores;
     }
-
-    public String getIdioma() {
+    public CategoriaIdioma getIdioma() {
         return idioma;
     }
-
-    public void setIdioma(String idioma) {
-        this.idioma = idioma;
-    }
-
     public Integer getDescargas() {
         return descargas;
     }
@@ -80,12 +56,16 @@ public class Libros {
     public void setDescargas(Integer descargas) {
         this.descargas = descargas;
     }
-
-    public List<Autores> getAutores() {
-        return autores;
+    public void setId(Long id) {
+        Id = id;
     }
-
-    public void setAutores(List<Autores> autores) {
+    public void setTitulo(String titulo) {
+        this.titulo = titulo;
+    }
+    public void setAutores(Autores autores) {
         this.autores = autores;
+    }
+    public void setIdioma(CategoriaIdioma idioma) {
+        this.idioma = idioma;
     }
 }
