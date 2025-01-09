@@ -28,7 +28,6 @@ public class Principal {
     public void muestramenu(){
         int opcion = -1;
         String menu = """
-          ******************** Hello world ********************
                    Bienvenido/a al Buscador de Libros
           1) Buscar libro por título 
           2) Listar libros registrados
@@ -37,7 +36,7 @@ public class Principal {
           5) Listar libros por idioma
           
           0) Salir
-          ******************** **** ******************** ******       
+          ***************************************************       
           """;
 
 
@@ -73,8 +72,6 @@ public class Principal {
                 default:
                     System.out.printf("Opción inválidaPor favor, ingrese un número del 0 al 5.\n");
             }
-
-            //teclado.close();
         }
 
     }
@@ -87,11 +84,11 @@ public class Principal {
                 fr >> Frances 
                 pt >> Portugues
                 """;
-        //System.out.println("Opcion 5");
+
         System.out.println(menuIdioma);
         String idiomaBuscado = teclado.nextLine();
         CategoriaIdioma idioma = null;
-        //teclado.next();
+
         switch (idiomaBuscado){
             case "es":
                 idioma = CategoriaIdioma.fromEspanol("Español") ;
@@ -125,7 +122,6 @@ public class Principal {
 
     private void listarAutoresPorYear() {
 
-        //System.out.println("Opcion 4");
         System.out.println("Ingrese el año vivo de Autore(s) que desea buscar: ");
         try {
             Integer year = teclado.nextInt();
@@ -144,14 +140,12 @@ public class Principal {
 
 
     private void listarAutoresRegistrados() {
-        //System.out.println("Opcion 3");
+
         autores = autoresRepository.findAll();
         autores.stream().forEach(System.out::println);
     }
 
     private void listarLibrosRegistrados() {
-        //System.out.println("Opcion 2");
-        //libros.forEach(System.out::println);
         libros = librosRepository.findAll();
         libros.stream().forEach(System.out::println);
 
@@ -173,21 +167,20 @@ public class Principal {
         DatosConsultaApi datosConsultaAPI =convierteDatos.obtenerDatos(respuesta, DatosConsultaApi.class);
         if (datosConsultaAPI.numeroLibros() !=0) {
             DatosLibros primerLibro = datosConsultaAPI.resultado().get(0);
-            Autores autorLibro = new Autores(primerLibro.autores().get(0));
+            Autores autoresLibros = new Autores(primerLibro.autores().get(0));
             Optional<Libros> libroBase = librosRepository.findLibroBytitulo(primerLibro.titulo());
             if (libroBase.isPresent()) {
                 System.out.println("No se puede registrar el mismo líbro ");
-                //System.out.println(libroBase);
             } else {
-                Optional<Autores> autorDeBase = autoresRepository.findBynombre(autorLibro.getNombre());
+                Optional<Autores> autorDeBase = autoresRepository.findBynombre(autoresLibros.getNombre());
                 if (autorDeBase.isPresent()) {
-                    autorLibro = autorDeBase.get();
+                    autoresLibros = autorDeBase.get();
                 } else {
-                    autoresRepository.save(autorLibro);
+                    autoresRepository.save(autoresLibros);
                 }
 
                 Libros libro = new Libros(primerLibro);
-                libro.setAutores(autorLibro);
+                libro.setAutores(autoresLibros);
                 librosRepository.save(libro);
                 System.out.println(libro);
             }

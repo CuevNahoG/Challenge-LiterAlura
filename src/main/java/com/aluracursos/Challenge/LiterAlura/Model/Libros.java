@@ -16,16 +16,16 @@ public class Libros {
     private Autores autores;
     @Enumerated(EnumType.STRING)
     private CategoriaIdioma idioma;
+    @Column(name = "numero_descargas", nullable = false)
     private Integer descargas;
 
     public Libros(){}
 
-    public Libros(DatosLibros datosLibro){
-        this.titulo = datosLibro.titulo();
-        this.autores = new Autores(datosLibro.autores().get(0));
-        this.descargas = datosLibro.descargas();
-        this.idioma = CategoriaIdioma.fromString(datosLibro.idiomas().toString().split(",")[0].trim());
-
+    public Libros(DatosLibros datosLibros) {
+        this.titulo = datosLibros.titulo();
+        this.autores = new Autores(datosLibros.autores().get(0));
+        this.descargas = datosLibros.descargas() != null ? datosLibros.descargas() : 0; // Valor por defecto
+        this.idioma = CategoriaIdioma.fromString(datosLibros.idiomas().toString().split(",")[0].trim());
     }
 
     @Override
